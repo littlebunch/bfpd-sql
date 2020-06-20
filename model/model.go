@@ -9,7 +9,7 @@ import (
 
 // Food reflects JSON used to transfer BFPD foods data from USDA csv
 type Food struct {
-	Id                 int64     `json:"_id,omitempty"`
+	gorm.Model
 	PublicationDate    time.Time `json:"publicationDateTime"`
 	ModifiedDate       time.Time `json:"modifiedDate,omitempty"`
 	AvailableDate      time.Time `json:"availableDate,omitempty"`
@@ -20,21 +20,18 @@ type Food struct {
 	FoodGroup          FoodGroup `gorm:"ForeignKey:FoodGroupID" json:"fg"`
 	FoodGroupID        int64
 	Ingredients        string
-	Manufacturer       Manufacturer `json:"company" gorm:"ForeignKey:ManufacturerID"`
+	Manufacturer       Manufacturer `json:"company" gorm:"foreignkey:ManufacturerID"`
 	ManufacturerID     int64
 	Datasource         string         `json:"source"`
-	NutrientData       []NutrientData `json:"nutrients" gorm:"ForeignKey:FoodID"`
+	NutrientData       []NutrientData `json:"nutrients" gorm:"foreignkey:FoodID"`
 	ServingSize        float32        `json:"value,omitempty"`
-	ServingUnit        string         `json:servingUnit`
-	ServingDescription string         `json:servingDescription`
+	ServingUnit        string         `json:"servingUnit"`
+	ServingDescription string         `json:"servingDescription"`
 	Country            string         `json:"marketCountry,omitempty"`
 }
 
 type Nutrient struct {
-	Id           int64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
+	gorm.Model
 	Version      uint8
 	Nutrientno   uint   `json:"nutno" binding:"required" gorm:"unique;not null"`
 	Tagname      string `json:"tag"`
@@ -48,56 +45,38 @@ type Nutrient struct {
 	NutrientData []NutrientData `gorm:"ForeignKey:NutrientID"`
 }
 type Manufacturer struct {
-	Id        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
-	Version   uint8
-	Name      string `json:"name" binding:"required"`
-	Foods     []Food
+	gorm.Model
+	Version uint8
+	Name    string `json:"name" binding:"required"`
+	Foods   []Food
 }
 
 type Unit struct {
-	Id        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
+	gorm.Model
 	Version   uint8  `json:"version"`
 	Unit      string `gorm:"unique;not null" json:"unit"`
 	Nutrients []Nutrient
 }
 type SourceCode struct {
-	Id           int64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
+	gorm.Model
 	Code         string         `binding:"required" json:"code"`
 	Description  string         `json:"desc"`
 	NutrientData []NutrientData //`gorm:"ForeignKey:SourceID"`
 }
 type Derivation struct {
-	Id           int64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
+	gorm.Model
 	Code         string `binding:"required" json:"code"`
 	Description  string `json:"desc"`
 	NutrientData []NutrientData
 }
 type FoodGroup struct {
-	Id          int64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   time.Time
+	gorm.Model
 	Cd          string `json:"cd" gorm:"unique;not null"`
 	Description string `json:"desc"`
 	Food        []Food
 }
 type NutrientData struct {
-	Id            int64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     time.Time
+	gorm.Model
 	Value         float32 `json:"value"`
 	Datapoints    uint32  `json:"dp"`
 	StandardError float32 `json:"se"`
@@ -119,6 +98,7 @@ type Config struct {
 	Db   string
 	User string
 	Pw   string
+	Url  string
 }
 type DB struct {
 	*gorm.DB
