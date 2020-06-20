@@ -7,10 +7,8 @@ package main
  */
 import (
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -18,8 +16,7 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
-	"github.com/littlebunch.com/bfpd-sql/ds/mariadb"
-	"github.com/littlebunch/bfpd-sql/ds"
+	"github.com/littlebunch/bfpd-sql/ds/mariadb"
 	bfpd "github.com/littlebunch/bfpd-sql/model"
 )
 
@@ -27,7 +24,7 @@ var wg sync.WaitGroup
 var tokens = make(chan struct{}, 200)
 var a = flag.Bool("a", false, "Create schema")
 var i = flag.String("i", "", "Input JSON file name")
-var c = flag.String("c", "config.json", "Config file")
+var c = flag.String("c", "config.yaml", "YAML config file")
 var t = flag.String("t", "FOOD", "Type of data to ingest: NUT, DERV, GROUP, FOOD")
 var n = flag.Int("n", 5000, "Number of foods in a transaction")
 
@@ -37,23 +34,10 @@ func main() {
 		dtype string
 		//in    ingest.Ingest
 		mdb mariadb.GormDb
-		ds  ds.DataSource
 	)
 	flag.Parse()
 	if *i == "" {
 		log.Fatal("CSV Input path is required ")
-	}
-
-	raw, err := ioutil.ReadFile(*c)
-	if err != nil {
-		log.Println(err.Error())
-		os.Exit(1)
-	}
-	json.Unmarshal(raw, &cs)
-	//ifile, err := os.Open(*i)
-	if err != nil {
-		log.Fatal("opening input file", err.Error())
-		os.Exit(1)
 	}
 
 	switch *t {
@@ -69,24 +53,22 @@ func main() {
 		log.Fatal("Invalid -t option ", *t)
 		os.Exit(1)
 	}
-	//defer ifile.Close()
-	err = ds.ConnectDs(cs)
+	fmt.Printf("dtype is %s\n", dtype)
+	err := cs.GetConfig(c)
 	if err != nil {
-		log.Fatal("failed to connect to database %v\n", err)
+		log.Fatal("Cannot process config: ", err.Error())
 	}
-	fmt.Printf("Data type is %s\n", dtype)
+	ds := &mdb
+	err = ds.ConnectDs(cs)
+	defer ds.CloseDs()
+	if err != nil {
+		log.Fatal("failed to connect to database ", err.Error())
+	}
 	db := mdb.Conn
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(300)
-	defer db.Close()
 	if *a {
-		db.AutoMigrate(&bfpd.Food{},
-			&bfpd.Nutrient{},
-			&bfpd.Manufacturer{},
-			&bfpd.NutrientData{},
-			&bfpd.Derivation{},
-			&bfpd.FoodGroup{},
-			&bfpd.Unit{})
+		ds.InitDb()
 	}
 	os.Exit(0)
 }

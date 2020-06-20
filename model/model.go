@@ -94,12 +94,6 @@ type NutrientData struct {
 }
 
 // Database configuration
-type Config struct {
-	Db   string
-	User string
-	Pw   string
-	Url  string
-}
 type DB struct {
 	*gorm.DB
 }

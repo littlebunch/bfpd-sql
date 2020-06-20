@@ -3,17 +3,18 @@
 package ds
 
 import (
-	fdc "github.com/littlebunch/bfpd-sql/model"
+	bfpd "github.com/littlebunch/bfpd-sql/model"
 )
 
 // DataSource wraps the basic methods used for accessing and updating a
 // data store.
 type DataSource interface {
-	ConnectDs(cs fdc.Config) error
+	ConnectDs(cs bfpd.Config) error
 	Get(q string, f interface{}) error
 	Query(q string, f *[]interface{}) error
 	Update(id string, r interface{}) error
 	Remove(id string) error
 	FoodExists(id string) bool
+	InitDb()
 	CloseDs()
 }
