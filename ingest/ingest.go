@@ -1,9 +1,7 @@
 //Package ingest provides the Ingest interface
 package ingest
 
-import (
-	"database/sql"
-)
+import "github.com/littlebunch/bfpd-sql/ds"
 
 // Counts holds counts for documents loaded during an ingest
 // process
@@ -18,5 +16,5 @@ type Counts struct {
 // Food Data Central documents, i.e. Branded Foods, Standard release legacy,
 // , Nutrients, etc..
 type Ingest interface {
-	ProcessFiles(path string, db *sql.DB) error
+	ProcessFiles(path string, dc ds.DataSource) error
 }

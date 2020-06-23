@@ -12,7 +12,7 @@ type TransformedFood struct {
 	Nutrients    []TransformedNutrientData `json:"nutrients"`
 }
 type TransformedNutrient struct {
-	Nutrientno  uint   `json:"nutno"`
+	Nutrientno  string `json:"nutno"`
 	Description string `json:"name"`
 }
 type TransformedFoodGroup struct {
