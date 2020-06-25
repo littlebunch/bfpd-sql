@@ -3,8 +3,9 @@ Simple command line utitly for loading Branded Food Products csv into a MySQL/Ma
 ### What's here
 * ./config -- go type definitions for configurating the app/database.
 * ./ds -- datasource interface implemented for mariadb.  It should be trivial to implement ds for other databases like postgres.
+* ./ingest -- interface implemented for branded foods   
 * ./model -- go type definitions for loading the csv data 
-* ./ingest -- interface implemented for branded foods
+* ./schema -- schema for the mariadb database
 ### How to run
 1. Install [go v 13](https://golang.org/dl/) or greater and a recent version of [mariadb](https://mariadb.com)
 2. Download the [branded foods and 'Supporting data for Downloads' csv](https://fdc.nal.usda.gov/download-datasets.html#bkmk-1) from Food Data Central and unzip into a directory of your choice.
