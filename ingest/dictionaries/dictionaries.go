@@ -37,13 +37,17 @@ func (p Dictionary) ProcessFiles(path string, dc ds.DataSource) error {
 			return err
 		}
 		cnt++
+		if cnt == 1 {
+			continue
+		}
+		id, err := strconv.ParseInt(record[0], 10, 0)
+		if err != nil {
+			id = 0
+		}
 		switch p.Dt {
 		// derivation codes
 		case bfpd.DERV:
-			id, err := strconv.ParseInt(record[0], 10, 0)
-			if err != nil {
-				id = 0
-			}
+
 			r = append(r, bfpd.Derivation{
 				ID:          int32(id),
 				Code:        record[1],
@@ -51,14 +55,13 @@ func (p Dictionary) ProcessFiles(path string, dc ds.DataSource) error {
 			})
 		// nutrients
 		case bfpd.NUT:
-
 			r = append(r,
 				bfpd.Nutrient{
+					ID:          int32(id),
 					Nutrientno:  record[3],
 					Description: record[1],
 					Unit:        record[2],
 				})
-
 		}
 	}
 	dc.Create(r)

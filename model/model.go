@@ -2,17 +2,13 @@
 package bfpd
 
 import (
+	"database/sql"
 	"time"
-
-	"github.com/jinzhu/gorm"
 )
 
 // Food reflects JSON used to transfer BFPD foods data from USDA csv
 type Food struct {
 	ID                 int32
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	DeletedAt          time.Time
 	PublicationDate    time.Time `json:"publicationDateTime"`
 	ModifiedDate       time.Time `json:"modifiedDate,omitempty"`
 	AvailableDate      time.Time `json:"availableDate,omitempty"`
@@ -35,36 +31,17 @@ type Food struct {
 
 type Nutrient struct {
 	ID          int32
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   time.Time
 	Nutrientno  string `json:"nutno" binding:"required" gorm:"unique;not null"`
 	Description string `json:"desc" binding:"required" gorm:"not null"`
 	Unit        string
 }
 type Manufacturer struct {
-	ID        int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
-	Version   uint8
-	Name      string `json:"name" binding:"required"`
-	Foods     []Food
-}
-
-type Unit struct {
-	ID        int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
-	Version   uint8  `json:"version"`
-	Unit      string `gorm:"unique;not null" json:"unit"`
-	Nutrients []Nutrient
+	ID      int32
+	Version uint8
+	Name    string `json:"name" binding:"required"`
+	Foods   []Food
 }
 type SourceCode struct {
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
 	ID           int32
 	Code         string         `binding:"required" json:"code"`
 	Description  string         `json:"desc"`
@@ -72,26 +49,17 @@ type SourceCode struct {
 }
 type Derivation struct {
 	ID           int32
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
 	Code         string `binding:"required" json:"code"`
 	Description  string `json:"desc"`
 	NutrientData []NutrientData
 }
 type FoodGroup struct {
 	ID          uint32
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   time.Time
 	Description string `json:"desc"`
 	Food        []Food
 }
 type NutrientData struct {
 	ID            int32
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-	DeletedAt     time.Time
 	Value         float32 `json:"value"`
 	Datapoints    uint32  `json:"dp"`
 	StandardError float32 `json:"se"`
@@ -110,5 +78,5 @@ type NutrientData struct {
 
 // Database configuration
 type DB struct {
-	*gorm.DB
+	*sql.DB
 }

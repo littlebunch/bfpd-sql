@@ -12,7 +12,8 @@ type DataSource interface {
 	Query(q string, f *[]interface{}) error
 	GetDictionary(dt string, offset int32, max int32) ([]interface{}, error)
 	Create(r []interface{}) error
-	Remove(id string) error
+	Remove(id int64) error
+	RemoveVersions(upc string) error
 	FoodExists(id string) bool
 	CloseDs()
 }

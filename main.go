@@ -24,7 +24,7 @@ var tokens = make(chan struct{}, 200)
 var a = flag.Bool("a", false, "Create schema")
 var i = flag.String("i", "", "Input JSON file name")
 var c = flag.String("c", "config.yaml", "YAML config file")
-var t = flag.String("t", "FOOD", "Type of data to ingest: BFPD, DERV, GROUP, NUT or NUTDATA")
+var t = flag.String("t", "BFPD", "Type of data to ingest: BFPD, DERV, GROUP, NUT or NUTDATA")
 var n = flag.Int("n", 5000, "Number of foods in a transaction")
 
 func main() {
@@ -56,7 +56,6 @@ func main() {
 	db := ds.Conn
 	db.SetMaxIdleConns(10)
 	db.SetMaxOpenConns(300)
-
 	// implement the Ingest interface
 	if dtype == bfpd.BFPD {
 		in = branded.Bfpd{Doctype: dt.ToString(bfpd.BFPD)}
