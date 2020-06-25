@@ -1,5 +1,5 @@
 # bfpd-sql
-Simple command line utitly for loading Branded Food Products csv into a MySQL/MariaDB database. 
+Simple command line utility for loading Branded Food Products csv into a MySQL/MariaDB database. 
 ### What's here
 * ./config -- go type definitions for configurating the app/database.
 * ./ds -- datasource interface implemented for mariadb.  It should be trivial to implement ds for other databases like postgres.
