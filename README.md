@@ -1,9 +1,9 @@
 # bfpd-sql
 Simple command line utility for loading Branded Food Products csv into a MySQL/MariaDB database. 
 ### What's here
-* ./config -- go type definitions for configurating the app/database.
-* ./ds -- datasource interface implemented for mariadb.  It should be trivial to implement ds for other databases like postgres.
-* ./ingest -- interface implemented for branded foods   
+* ./config -- go type definitions for configuring the app.
+* ./ds -- datasource interface implemented for mariadb.  Feel free to implement a ds for your favorite database like postgres.
+* ./ingest -- interface implemented for branded foods, where the csv gets translated into the model   
 * ./model -- go type definitions for loading the csv data 
 * ./schema -- schema for the mariadb database
 ### How to run
