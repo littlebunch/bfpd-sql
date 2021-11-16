@@ -10,10 +10,8 @@ type DataSource interface {
 	ConnectDs(cs config.Config) error
 	Get(q string, f interface{}) error
 	Query(q string, f *[]interface{}) error
-	GetDictionary(dt string, offset int32, max int32) ([]interface{}, error)
 	Create(r []interface{}) error
 	Remove(id int64) error
-	RemoveVersions(upc string) error
 	FoodExists(id string) bool
 	CloseDs()
 }

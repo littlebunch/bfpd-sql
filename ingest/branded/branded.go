@@ -1,4 +1,4 @@
-// Package bfpd implements an Ingest for Branded Food Products.
+// Package branded implements an Ingest for Branded Food Products.
 // IMPORTANT: BFPD consists of 2 files: food.csv and branded_food.csv.
 // These files need to be sorted prior to running the ingest.
 package branded

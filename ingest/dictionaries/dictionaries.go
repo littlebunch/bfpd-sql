@@ -1,4 +1,4 @@
-//Package dictionaries implements an Ingest for supporting files
+//Package dictionaries implements an Ingest for supporting files, e.g. Nutrients
 package dictionaries
 
 import (
@@ -66,45 +66,4 @@ func (p Dictionary) ProcessFiles(path string, dc ds.DataSource) error {
 	}
 	dc.Create(r)
 	return nil
-}
-
-// InitNutrientInfoMap creates a map from NUT documents in the data store.
-func InitNutrientInfoMap(il []interface{}) map[uint]bfpd.Nutrient {
-	m := make(map[uint]bfpd.Nutrient)
-	for _, v := range il {
-		n := v.(bfpd.Nutrient)
-		m[uint(n.ID)] = n
-	}
-	return m
-}
-
-// InitDerivationInfoMap creates a map from DERV documents in the data store.
-func InitDerivationInfoMap(il []interface{}) map[uint]bfpd.Derivation {
-	m := make(map[uint]bfpd.Derivation)
-	for _, v := range il {
-		d := v.(bfpd.Derivation)
-		m[uint(d.ID)] = d
-	}
-	return m
-}
-
-// InitFoodGroupInfoMap creates a map from FGSR or FGFNDDS documents in the data store
-func InitFoodGroupInfoMap(il []interface{}) map[uint]bfpd.FoodGroup {
-	m := make(map[uint]bfpd.FoodGroup)
-	for _, v := range il {
-		fg := v.(bfpd.FoodGroup)
-		m[uint(fg.ID)] = fg
-	}
-	return m
-}
-
-// InitBrandedFoodGroupInfoMap creates a map for FGGPC documents
-func InitBrandedFoodGroupInfoMap(il []interface{}) map[string]bfpd.FoodGroup {
-	m := make(map[string]bfpd.FoodGroup)
-	for _, v := range il {
-		fg := v.(bfpd.FoodGroup)
-		m[fg.Description] = fg
-	}
-
-	return m
 }
