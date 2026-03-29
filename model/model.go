@@ -2,27 +2,28 @@
 package bfpd
 
 import (
-	"database/sql"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Food reflects JSON used to transfer BFPD foods data from USDA csv
 type Food struct {
-	ID                 int32
-	PublicationDate    time.Time `json:"publicationDateTime"`
-	ModifiedDate       time.Time `json:"modifiedDate,omitempty"`
-	AvailableDate      time.Time `json:"availableDate,omitempty"`
-	DiscontinueDate    time.Time `json:"discontinueDate,omitempty"`
-	Upc                string    `json:"upc" binding:"required" gorm:"unique;not null"`
-	FdcID              string    `json:"fdcId" binding:"required"`
-	Description        string    `json:"name" binding:"required"`
-	FoodGroup          FoodGroup `gorm:"ForeignKey:FoodGroupID" json:"fg"`
-	FoodGroupID        int64
-	Ingredients        string
-	Manufacturer       Manufacturer `json:"company" gorm:"foreignkey:ManufacturerID"`
-	ManufacturerID     int64
+	gorm.Model
+	PublicationDate    time.Time      `json:"publicationDateTime"`
+	ModifiedDate       time.Time      `json:"modifiedDate,omitempty"`
+	AvailableDate      time.Time      `json:"availableDate,omitempty"`
+	DiscontinueDate    time.Time      `json:"discontinueDate,omitempty"`
+	Upc                string         `json:"upc" binding:"required" gorm:"unique;not null"`
+	FdcID              string         `json:"fdcId" binding:"required"`
+	Description        string         `json:"name" binding:"required"`
+	FoodGroup          FoodGroup      `gorm:"foreignKey:FoodGroupID" json:"fg"`
+	FoodGroupID        int64          `json:"food_group_id"`
+	Ingredients        string         `json:"ingredients"`
+	Manufacturer       Manufacturer   `json:"company" gorm:"foreignKey:ManufacturerID"`
+	ManufacturerID     int64          `json:"manufacturer_id"`
 	Datasource         string         `json:"source"`
-	NutrientData       []NutrientData `json:"nutrients" gorm:"foreignkey:FoodID"`
+	NutrientData       []NutrientData `json:"nutrients" gorm:"foreignKey:FoodID"`
 	ServingSize        float32        `json:"value,omitempty"`
 	ServingUnit        string         `json:"servingUnit"`
 	ServingDescription string         `json:"servingDescription"`
@@ -68,15 +69,10 @@ type NutrientData struct {
 	Minimum       float32
 	Maximum       float32
 	Median        float32
-	Derivation    Derivation `json:"deriv" gorm:"ForeignKey:DerivationID"`
+	Derivation    Derivation `json:"deriv" gorm:"foreignKey:DerivationID"`
 	DerivationID  int64
-	Nutrient      Nutrient `gorm:"ForeignKey:NutrientID"`
+	Nutrient      Nutrient `gorm:"foreignKey:NutrientID"`
 	NutrientID    int64    `json:"nutno"`
-	Food          Food     `gorm:"ForeignKey:FoodID"`
+	Food          Food     `gorm:"foreignKey:FoodID"`
 	FoodID        int64
-}
-
-// Database configuration
-type DB struct {
-	*sql.DB
 }

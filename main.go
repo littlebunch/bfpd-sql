@@ -53,9 +53,14 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to connect to database ", err.Error())
 	}
-	db := ds.Conn
-	db.SetMaxIdleConns(10)
-	db.SetMaxOpenConns(300)
+
+	// Set connection pool settings
+	sqlDB, err := ds.Conn.DB()
+	if err != nil {
+		log.Fatal("failed to get database connection ", err.Error())
+	}
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(300)
 	// implement the Ingest interface
 	if dtype == bfpd.BFPD {
 		in = branded.Bfpd{Doctype: dt.ToString(bfpd.BFPD)}
