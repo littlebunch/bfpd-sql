@@ -31,36 +31,36 @@ type Food struct {
 }
 
 type Nutrient struct {
-	ID          int32
+	gorm.Model
 	Nutrientno  string `json:"nutno" binding:"required" gorm:"unique;not null"`
 	Description string `json:"desc" binding:"required" gorm:"not null"`
 	Unit        string
 }
 type Manufacturer struct {
-	ID      int32
+	gorm.Model
 	Version uint8
 	Name    string `json:"name" binding:"required"`
 	Foods   []Food
 }
 type SourceCode struct {
-	ID           int32
+	gorm.Model
 	Code         string         `binding:"required" json:"code"`
 	Description  string         `json:"desc"`
 	NutrientData []NutrientData //`gorm:"ForeignKey:SourceID"`
 }
 type Derivation struct {
-	ID           int32
+	gorm.Model
 	Code         string `binding:"required" json:"code"`
 	Description  string `json:"desc"`
 	NutrientData []NutrientData
 }
 type FoodGroup struct {
-	ID          uint32
+	gorm.Model
 	Description string `json:"desc"`
 	Food        []Food
 }
 type NutrientData struct {
-	ID            int32
+	gorm.Model
 	Value         float32 `json:"value"`
 	Datapoints    uint32  `json:"dp"`
 	StandardError float32 `json:"se"`

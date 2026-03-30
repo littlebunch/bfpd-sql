@@ -1,4 +1,4 @@
-//Package dictionaries implements an Ingest for supporting files, e.g. Nutrients
+// Package dictionaries implements an Ingest for supporting files, e.g. Nutrients
 package dictionaries
 
 import (
@@ -10,9 +10,10 @@ import (
 
 	"github.com/littlebunch/bfpd-sql/ds"
 	bfpd "github.com/littlebunch/bfpd-sql/model"
+	"gorm.io/gorm"
 )
 
-//Dictionary for implementing the interface
+// Dictionary for implementing the interface
 type Dictionary struct {
 	Dt bfpd.DocType
 }
@@ -49,19 +50,18 @@ func (p Dictionary) ProcessFiles(path string, dc ds.DataSource) error {
 		case bfpd.DERV:
 
 			r = append(r, bfpd.Derivation{
-				ID:          int32(id),
+				Model:       gorm.Model{ID: uint(id)},
 				Code:        record[1],
 				Description: record[2],
 			})
 		// nutrients
 		case bfpd.NUT:
-			r = append(r,
-				bfpd.Nutrient{
-					ID:          int32(id),
-					Nutrientno:  record[3],
-					Description: record[1],
-					Unit:        record[2],
-				})
+			r = append(r, bfpd.Nutrient{
+				Model:       gorm.Model{ID: uint(id)},
+				Nutrientno:  record[3],
+				Description: record[1],
+				Unit:        record[2],
+			})
 		}
 	}
 	dc.Create(r)

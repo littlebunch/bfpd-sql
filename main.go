@@ -17,6 +17,7 @@ import (
 	"github.com/littlebunch/bfpd-sql/ingest/branded"
 	"github.com/littlebunch/bfpd-sql/ingest/dictionaries"
 	bfpd "github.com/littlebunch/bfpd-sql/model"
+	"github.com/littlebunch/bfpd-sql/schema"
 )
 
 var wg sync.WaitGroup
@@ -26,6 +27,7 @@ var i = flag.String("i", "", "Input JSON file name")
 var c = flag.String("c", "config.yaml", "YAML config file")
 var t = flag.String("t", "BFPD", "Type of data to ingest: BFPD, DERV, GROUP, NUT or NUTDATA")
 var n = flag.Int("n", 5000, "Number of foods in a transaction")
+var s = flag.Bool("s", false, "Create schema tables")
 
 func main() {
 	var (
@@ -35,9 +37,7 @@ func main() {
 		mdb mariadb.SqlDb
 	)
 	flag.Parse()
-	if *i == "" {
-		log.Fatal("CSV input path is required ")
-	}
+
 	dtype := dt.ToDocType(*t)
 	if dtype == 999 {
 		log.Fatalln("Valid t option is required ", *t)
@@ -66,6 +66,18 @@ func main() {
 		in = branded.Bfpd{Doctype: dt.ToString(bfpd.BFPD)}
 	} else {
 		in = dictionaries.Dictionary{Dt: dtype}
+	}
+	if *a || *s {
+		if err := schema.CreateSchema(ds.Conn); err != nil {
+			log.Fatal("Failed to create schema: ", err.Error())
+		}
+		log.Println("Schema created.")
+		if *s {
+			os.Exit(0)
+		}
+	}
+	if *i == "" {
+		log.Fatal("CSV input path is required ")
 	}
 	// ingest the csv files
 	if err := in.ProcessFiles(*i, ds); err != nil {
