@@ -46,7 +46,7 @@ type SourceCode struct {
 	gorm.Model
 	Code         string         `binding:"required" json:"code"`
 	Description  string         `json:"desc"`
-	NutrientData []NutrientData //`gorm:"ForeignKey:SourceID"`
+	NutrientData []NutrientData `gorm:"foreignKey:SourceID" json:"nutrients"`
 }
 type Derivation struct {
 	gorm.Model
@@ -71,6 +71,8 @@ type NutrientData struct {
 	Median        float32
 	Derivation    Derivation `json:"deriv" gorm:"foreignKey:DerivationID"`
 	DerivationID  int64
+	SourceCode    SourceCode `json:"src" gorm:"foreignKey:SourceID"`
+	SourceID      int64
 	Nutrient      Nutrient `gorm:"foreignKey:NutrientID"`
 	NutrientID    int64    `json:"nutno"`
 	Food          Food     `gorm:"foreignKey:FoodID"`

@@ -130,7 +130,6 @@ func nutrients(path string, dc ds.DataSource) error {
 	if err != nil {
 		return err
 	}
-
 	r := csv.NewReader(f)
 	var (
 		n []interface{}
