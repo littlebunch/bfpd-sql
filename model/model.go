@@ -10,24 +10,23 @@ import (
 // Food reflects JSON used to transfer BFPD foods data from USDA csv
 type Food struct {
 	gorm.Model
-	PublicationDate    time.Time      `json:"publicationDateTime"`
-	ModifiedDate       time.Time      `json:"modifiedDate,omitempty"`
-	AvailableDate      time.Time      `json:"availableDate,omitempty"`
-	DiscontinueDate    time.Time      `json:"discontinueDate,omitempty"`
-	Upc                string         `json:"upc" binding:"required" gorm:"unique;not null"`
-	FdcID              string         `json:"fdcId" binding:"required"`
-	Description        string         `json:"name" binding:"required"`
-	FoodGroup          FoodGroup      `gorm:"foreignKey:FoodGroupID" json:"fg"`
-	FoodGroupID        int64          `json:"food_group_id"`
-	Ingredients        string         `json:"ingredients"`
-	Manufacturer       Manufacturer   `json:"company" gorm:"foreignKey:ManufacturerID"`
-	ManufacturerID     int64          `json:"manufacturer_id"`
-	Datasource         string         `json:"source"`
-	NutrientData       []NutrientData `json:"nutrients" gorm:"foreignKey:FoodID"`
-	ServingSize        float32        `json:"value,omitempty"`
-	ServingUnit        string         `json:"servingUnit"`
-	ServingDescription string         `json:"servingDescription"`
-	Country            string         `json:"marketCountry,omitempty"`
+	PublicationDate time.Time      `json:"publicationDateTime"`
+	ModifiedDate    time.Time      `json:"modifiedDate,omitempty"`
+	AvailableDate   time.Time      `json:"availableDate,omitempty"`
+	DiscontinueDate time.Time      `json:"discontinueDate,omitempty"`
+	Upc             string         `json:"upc" binding:"required" gorm:"unique;not null"`
+	FdcID           string         `json:"fdcId" binding:"required"`
+	Description     string         `json:"name" binding:"required"`
+	FoodGroup       FoodGroup      `gorm:"foreignKey:FoodGroupID" json:"fg"`
+	FoodGroupID     int64          `json:"food_group_id"`
+	Ingredients     string         `json:"ingredients"`
+	Brand           Brand          `json:"brand" gorm:"foreignKey:BrandID"`
+	BrandID         int64          `json:"brand_id"`
+	Datasource      string         `json:"source"`
+	NutrientData    []NutrientData `json:"nutrients" gorm:"foreignKey:FoodID"`
+	Serving         Serving        `json:"serving" gorm:"foreignKey:ServingID"`
+	ServingID       int64          `json:"serving_id"`
+	Country         string         `json:"marketCountry,omitempty"`
 }
 
 type Nutrient struct {
@@ -36,11 +35,20 @@ type Nutrient struct {
 	Description string `json:"desc" binding:"required" gorm:"not null"`
 	Unit        string
 }
-type Manufacturer struct {
+type Brand struct {
 	gorm.Model
-	Version uint8
-	Name    string `json:"name" binding:"required"`
-	Foods   []Food
+	Version  uint8
+	Brand    string `json:"brand"`
+	SubBrand string `json:"subBrand"`
+	Owner    string `json:"owner" binding:"required" gorm:"unique; not null"`
+	Foods    []Food
+}
+type Serving struct {
+	gorm.Model
+	Description string `json:"desc"`
+	Size        float32
+	Unit        string
+	Foods       []Food
 }
 type SourceCode struct {
 	gorm.Model

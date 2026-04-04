@@ -64,7 +64,9 @@ func (p Bfpd) ProcessFiles(path string, dc ds.DataSource) error {
 	for l := range mergedLinesChan {
 		buf.WriteString(fmt.Sprintf("%v,%v", l.id, l.restOfLine))
 		record, _ := r.Read()
-
+		for i := range record {
+			fmt.Printf("Record[%d] = %s\n", i, record[i])
+		}
 		pubdate, err := time.Parse("2006-01-02", record[4])
 		if err != nil {
 			log.Println(err)
@@ -81,39 +83,43 @@ func (p Bfpd) ProcessFiles(path string, dc ds.DataSource) error {
 		food.FdcID = record[0]
 		food.Description = record[2]
 		food.PublicationDate = pubdate
-		food.Manufacturer = bfpd.Manufacturer{Name: record[5]}
-		food.Upc = record[6]
-		food.Ingredients = record[7]
+		food.Brand.Owner = record[8]
+		food.Brand.Brand = record[9]
+		food.Brand.SubBrand = record[10]
+		food.Upc = record[11]
+		food.Ingredients = record[12]
 		cnts.Foods++
 		if cnts.Foods%10000 == 0 {
 			log.Println("Foods Count = ", cnts.Foods)
 		}
-		a, err := strconv.ParseFloat(record[8], 32)
+		a, err := strconv.ParseFloat(record[14], 32)
 		if err != nil {
-			log.Println(record[0] + ": can't parse serving amount " + record[8])
+			log.Println(record[0] + ": can't parse serving amount " + record[14])
 		} else {
-			food.ServingDescription = record[10]
-			food.ServingSize = float32(a)
-			food.ServingUnit = record[9]
+			food.Serving.Description = record[15]
+			food.Serving.Size = float32(a)
+			food.Serving.Unit = record[16]
 		}
-		food.Datasource = record[12]
-		if record[13] != "" {
-			food.ModifiedDate, _ = time.Parse("2006-01-02", record[13])
+		food.Datasource = record[19]
+		if record[21] != "" {
+			food.ModifiedDate, _ = time.Parse("2006-01-02", record[20])
 		}
-		if record[14] != "" {
-			food.AvailableDate, _ = time.Parse("2006-01-02", record[14])
+		if record[22] != "" {
+			food.AvailableDate, _ = time.Parse("2006-01-02", record[21])
 		}
-		if record[16] != "" {
-			food.DiscontinueDate, _ = time.Parse("2006-01-02", record[16])
+		if record[23] != "" {
+			food.DiscontinueDate, _ = time.Parse("2006-01-02", record[23])
 		}
-		food.Country = record[15]
-		if record[11] != "" {
-			food.FoodGroup = bfpd.FoodGroup{Description: record[11]}
+		food.Country = record[22]
+		if record[18] != "" {
+			food.FoodGroup = bfpd.FoodGroup{Description: record[17]}
 		} else {
 			food.FoodGroup = bfpd.FoodGroup{}
 		}
 		il = append(il, food)
-
+	}
+	if len(il) > 0 {
+		dc.Create(il)
 	}
 	if err = nutrients(path, dc); err != nil {
 		log.Printf("nutrient load failed: %v", err)

@@ -1,6 +1,6 @@
 package bfpd
 
-//"fmt"
+// "fmt"
 type TransformedFood struct {
 	ID           int64                     `json:"id"`
 	Ndbno        string                    `json:"ndbno"`
@@ -22,7 +22,7 @@ type TransformedFoodGroup struct {
 type TransformedIngredients struct {
 	Description  string `json:"desc" binding:"required"`
 	Available    string `json:"avail"`        //	The date the data for the food item represented by the specific GTIN was made available on the market.
-	Discontinued string `json:"discontinued"` //	The data indicated by the manufacturer that the product represented by a specific GTIN has been discontinued
+	Discontinued string `json:"discontinued"` //	The data indicated by the brand owner that the product represented by a specific GTIN has been discontinued
 	Updated      string `json:"updated"`
 }
 type TransformedNutrientData struct {

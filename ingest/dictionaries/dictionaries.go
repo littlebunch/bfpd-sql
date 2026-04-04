@@ -57,8 +57,7 @@ func (p Dictionary) ProcessFiles(path string, dc ds.DataSource) error {
 		// nutrients
 		case bfpd.NUT:
 			r = append(r, bfpd.Nutrient{
-				Model:       gorm.Model{ID: uint(id)},
-				Nutrientno:  record[3],
+				Nutrientno:  record[0],
 				Description: record[1],
 				Unit:        record[2],
 			})

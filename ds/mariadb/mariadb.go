@@ -17,12 +17,12 @@ type SqlDb struct {
 func (ds *SqlDb) ConnectDs(cs config.Config) error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local", cs.User, cs.Pwd, cs.URL, cs.Db)
 	fmt.Printf("Connecting to %s\n", dsn)
-	
+
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return err
 	}
-	
+
 	ds.Conn = db
 	return nil
 }
@@ -83,7 +83,7 @@ func (ds *SqlDb) RemoveVersions(upc string) error {
 	if err := ds.Conn.Where("upc = ?", upc).Find(&foods).Error; err != nil {
 		return err
 	}
-	
+
 	for _, food := range foods {
 		if err := ds.Remove(int64(food.ID)); err != nil {
 			log.Printf("Failed to remove %d: %v\n", food.ID, err)
@@ -91,7 +91,7 @@ func (ds *SqlDb) RemoveVersions(upc string) error {
 		}
 		log.Printf("Removed %d\n", food.ID)
 	}
-	
+
 	return nil
 }
 
@@ -111,15 +111,21 @@ func createFood(foods []interface{}, ds *SqlDb) {
 	err := ds.Conn.Transaction(func(tx *gorm.DB) error {
 		for _, f := range foods {
 			food := f.(bfpd.Food)
-			
-			// Find or create manufacturer
-			manufacturer := bfpd.Manufacturer{Name: food.Manufacturer.Name}
-			result := tx.Where("name = ?", food.Manufacturer.Name).FirstOrCreate(&manufacturer)
+
+			// Find or create brand
+			brand := bfpd.Brand{Brand: food.Brand.Brand, Owner: food.Brand.Owner, SubBrand: food.Brand.SubBrand}
+			result := tx.Where("owner = ?", food.Brand.Owner).FirstOrCreate(&brand)
 			if result.Error != nil {
 				return result.Error
 			}
-			food.ManufacturerID = int64(manufacturer.ID)
-			
+			food.BrandID = int64(brand.ID)
+			// Find or create serving
+			serving := bfpd.Serving{Description: food.Serving.Description, Size: food.Serving.Size, Unit: food.Serving.Unit}
+			result = tx.Where("description = ? && size = ? && unit = ?", food.Serving.Description, food.Serving.Size, food.Serving.Unit).FirstOrCreate(&serving)
+			if result.Error != nil {
+				return result.Error
+			}
+			food.ServingID = int64(serving.ID)
 			// Find or create food group
 			foodGroup := bfpd.FoodGroup{Description: food.FoodGroup.Description}
 			result = tx.Where("description = ?", food.FoodGroup.Description).FirstOrCreate(&foodGroup)
@@ -127,7 +133,7 @@ func createFood(foods []interface{}, ds *SqlDb) {
 				return result.Error
 			}
 			food.FoodGroupID = int64(foodGroup.ID)
-			
+
 			// Create the food
 			if result := tx.Create(&food); result.Error != nil {
 				return result.Error
@@ -135,7 +141,7 @@ func createFood(foods []interface{}, ds *SqlDb) {
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		log.Printf("Error creating foods: %v\n", err)
 		checkerr(err)
@@ -154,7 +160,7 @@ func createNutrient(nutrients []interface{}, ds *SqlDb) {
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		log.Printf("Error creating nutrients: %v\n", err)
 		checkerr(err)
@@ -167,14 +173,14 @@ func createNutrientData(nutdata []interface{}, ds *SqlDb) {
 	err := ds.Conn.Transaction(func(tx *gorm.DB) error {
 		for _, n := range nutdata {
 			ndata := n.(bfpd.NutrientData)
-			
+
 			// Find the food by FdcID
 			var food bfpd.Food
 			if result := tx.Where("fdc_id = ?", ndata.Food.FdcID).First(&food); result.Error != nil {
 				log.Println("No food found for ", ndata.Food.FdcID)
 				continue
 			}
-			
+
 			ndata.FoodID = int64(food.ID)
 			if result := tx.Create(&ndata); result.Error != nil {
 				return result.Error
@@ -182,7 +188,7 @@ func createNutrientData(nutdata []interface{}, ds *SqlDb) {
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		log.Printf("Error creating nutrient data: %v\n", err)
 		checkerr(err)
@@ -201,7 +207,7 @@ func createDerivation(derivations []interface{}, ds *SqlDb) {
 		}
 		return nil
 	})
-	
+
 	if err != nil {
 		log.Printf("Error creating derivations: %v\n", err)
 		checkerr(err)
