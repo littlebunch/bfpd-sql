@@ -14,7 +14,7 @@ type Food struct {
 	ModifiedDate    time.Time      `json:"modifiedDate,omitempty"`
 	AvailableDate   time.Time      `json:"availableDate,omitempty"`
 	DiscontinueDate time.Time      `json:"discontinueDate,omitempty"`
-	Upc             string         `json:"upc" binding:"required" gorm:"unique;not null"`
+	Upc             string         `json:"upc" binding:"required"`
 	FdcID           string         `json:"fdcId" binding:"required"`
 	Description     string         `json:"name" binding:"required"`
 	FoodGroup       FoodGroup      `gorm:"foreignKey:FoodGroupID" json:"fg"`
@@ -45,9 +45,9 @@ type Brand struct {
 }
 type Serving struct {
 	gorm.Model
-	Description string `json:"desc"`
-	Size        float32
-	Unit        string
+	Description string  `json:"desc" gorm:"uniqueIndex:idx_serving_composite"`
+	Size        float32 `gorm:"uniqueIndex:idx_serving_composite"`
+	Unit        string  `gorm:"uniqueIndex:idx_serving_composite"`
 	Foods       []Food
 }
 type SourceCode struct {
@@ -64,7 +64,7 @@ type Derivation struct {
 }
 type FoodGroup struct {
 	gorm.Model
-	Description string `json:"desc"`
+	Description string `json:"desc" binding:"required" gorm:"unique;not null"`
 	Food        []Food
 }
 type NutrientData struct {

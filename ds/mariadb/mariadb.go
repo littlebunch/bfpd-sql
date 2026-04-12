@@ -1,6 +1,7 @@
 package mariadb
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -43,6 +44,9 @@ func (ds *SqlDb) Query(q string, f *[]interface{}) error {
 }
 
 func (ds *SqlDb) Create(r []interface{}) error {
+	if len(r) == 0 {
+		return nil
+	}
 	switch t := r[0].(type) {
 	case bfpd.Food:
 		createFood(r, ds)
@@ -104,7 +108,10 @@ func checkerr(e error) {
 func (ds *SqlDb) FoodExists(fdcid string) bool {
 	var food bfpd.Food
 	result := ds.Conn.Where("fdc_id = ?", fdcid).First(&food)
-	return result.RowsAffected > 0
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false
+	}
+	return true
 }
 
 func createFood(foods []interface{}, ds *SqlDb) {
@@ -122,6 +129,7 @@ func createFood(foods []interface{}, ds *SqlDb) {
 			// Find or create serving
 			serving := bfpd.Serving{Description: food.Serving.Description, Size: food.Serving.Size, Unit: food.Serving.Unit}
 			result = tx.Where("description = ? && size = ? && unit = ?", food.Serving.Description, food.Serving.Size, food.Serving.Unit).FirstOrCreate(&serving)
+			//fmt.Printf("Serving: %v\n", serving)
 			if result.Error != nil {
 				return result.Error
 			}

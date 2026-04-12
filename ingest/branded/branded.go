@@ -4,15 +4,12 @@
 package branded
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/littlebunch/bfpd-sql/ds"
@@ -22,7 +19,6 @@ import (
 
 var (
 	cnts ingest.Counts
-	err  error
 	//gbucket string
 )
 
@@ -31,11 +27,8 @@ type Bfpd struct {
 	Doctype string
 }
 type line struct {
-	id         int
-	restOfLine string
-}
-type f struct {
-	FdcID string `json:"fdcId" binding:"required"`
+	id     int
+	fields []string // Hold parsed CSV fields instead of raw string
 }
 
 // ProcessFiles loads a set of Branded Food Products csv.  The 2 data files (food.csv and
@@ -57,28 +50,29 @@ func (p Bfpd) ProcessFiles(path string, dc ds.DataSource) error {
 	mergedLinesChan := make(chan *line)
 	go joiner(metadataChan, brandedChan, mergedLinesChan)
 	// process the merged stream as csv
-	var buf bytes.Buffer
-	r := csv.NewReader(&buf)
 	fgid := 0
 
 	for l := range mergedLinesChan {
-		buf.WriteString(fmt.Sprintf("%v,%v", l.id, l.restOfLine))
-		record, _ := r.Read()
-		for i := range record {
-			fmt.Printf("Record[%d] = %s\n", i, record[i])
+		// l.fields has been constructed by the joiner from actual CSV fields
+		// prepend the ID as the first field since it was stripped during reading
+		record := make([]string, len(l.fields)+1)
+		record[0] = fmt.Sprintf("%d", l.id)
+		copy(record[1:], l.fields)
+
+		// Validate minimum required fields before accessing any
+		if len(record) < 25 { // Now including the ID field, need 25 total
+			// Log detailed info for problematic records
+
+			log.Printf("Insufficient fields in record (merged from id %d): expected 25, got %d.\n", l.id, len(record))
+			continue
 		}
+
 		pubdate, err := time.Parse("2006-01-02", record[4])
 		if err != nil {
 			log.Println(err)
 		}
 		if dc.FoodExists(record[0]) {
 			continue
-		}
-		fgid++
-		if fgid%1000 == 0 {
-			log.Println(fgid)
-			dc.Create(il)
-			il = nil
 		}
 		food.FdcID = record[0]
 		food.Description = record[2]
@@ -96,9 +90,9 @@ func (p Bfpd) ProcessFiles(path string, dc ds.DataSource) error {
 		if err != nil {
 			log.Println(record[0] + ": can't parse serving amount " + record[14])
 		} else {
-			food.Serving.Description = record[15]
+			food.Serving.Description = record[16]
 			food.Serving.Size = float32(a)
-			food.Serving.Unit = record[16]
+			food.Serving.Unit = record[15]
 		}
 		food.Datasource = record[19]
 		if record[21] != "" {
@@ -117,6 +111,12 @@ func (p Bfpd) ProcessFiles(path string, dc ds.DataSource) error {
 			food.FoodGroup = bfpd.FoodGroup{}
 		}
 		il = append(il, food)
+		fgid++
+		if fgid%1000 == 0 {
+			log.Println(fgid)
+			dc.Create(il)
+			il = nil
+		}
 	}
 	if len(il) > 0 {
 		dc.Create(il)
@@ -136,6 +136,7 @@ func nutrients(path string, dc ds.DataSource) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	r := csv.NewReader(f)
 	var (
 		n []interface{}
@@ -195,52 +196,99 @@ func reader(fname string, out chan<- *line) {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	csvReader := csv.NewReader(file)
 	header := true
-	for scanner.Scan() {
-		var l line
-		columns := strings.SplitN(scanner.Text(), ",", 2)
+	lastID := -1
+	lineNum := 0
+	rowCount := 0
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error reading CSV from %s: %v", fname, err)
+		}
+
+		lineNum++
+
 		// ignore first line (header)
 		if header {
 			header = false
+			log.Printf("File %s header: %d fields\n", fname, len(record))
 			continue
 		}
-		// convert ID to integer for easier comparison
-		id, err := strconv.Atoi(strings.ReplaceAll(columns[0], "\"", ""))
-		if err != nil {
-			log.Fatalf("ParseInt: %v", err)
+
+		// Need at least ID field
+		if len(record) < 1 {
+			continue
 		}
-		l.id = id
-		l.restOfLine = columns[1]
+
+		// convert ID to integer for easier comparison
+		id, err := strconv.Atoi(record[0])
+		if err != nil {
+			log.Printf("Warning: skipping line with non-integer ID '%s' in %s: %v\n", record[0], fname, err)
+			continue
+		}
+
+		// CHECK: Verify file is sorted by ID (required for joiner algorithm)
+		if id < lastID {
+			log.Fatalf("ERROR: %s is not sorted by ID.\nIDs must be sorted for the merge to work.\nFound ID %d after %d at line %d.\nPlease sort both files by the ID column (field 0) before running ingest.\n", fname, id, lastID, lineNum)
+		}
+		lastID = id
+		rowCount++
+
+		// Log first few rows and row around problem area (ID 1119794)
+		if rowCount <= 3 || id == 1119794 || rowCount%5000 == 0 {
+			log.Printf("File %s: row %d, ID %d, fields=%d\n", fname, rowCount, id, len(record)-1)
+		}
+
+		// Keep fields as-is (fields 1 onwards) - don't reconstruct as string
+		var recordFields []string
+		if len(record) > 1 {
+			recordFields = record[1:]
+		}
+
+		// Allocate a new struct for each line to avoid memory aliasing
+		l := &line{
+			id:     id,
+			fields: recordFields,
+		}
 		// send the line to the channel
-		out <- &l
+		out <- l
 	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("File %s: processed %d rows\n", fname, rowCount)
 }
 func joiner(metadata, setIDs <-chan *line, out chan<- *line) {
 	defer close(out) // close channel on return
 
 	bf := &line{}
+	mdCount := 0
+	bfCount := 0
+	matchCount := 0
+
 	for md := range metadata {
-		sep := ","
+		mdCount++
+
 		// add matching branded_foods.csv line (if left over from previous iteration)
 		if bf.id == md.id {
-			md.restOfLine += sep + bf.restOfLine
-			sep = " "
+			md.fields = append(md.fields, bf.fields...)
+			matchCount++
 		}
 		// look for matching branded foods
 		for bf = range setIDs {
+			bfCount++
 			// add all branded_foods.csv with matching IDs
 			if bf.id == md.id {
-				md.restOfLine += sep + bf.restOfLine
-				sep = " "
+				md.fields = append(md.fields, bf.fields...)
+				matchCount++
 			} else if bf.id > md.id {
 				break
 			}
 		}
 		// send the augmented line into the channel
 		out <- md
+
 	}
+	log.Printf("Joiner complete: %d metadata, %d branded, %d matches\n", mdCount, bfCount, matchCount)
 }
